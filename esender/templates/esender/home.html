@@ -1,0 +1,33 @@
+<html>
+<head>
+    <title>Connect Email</title>
+</head>
+<body>
+    <h1>Welcome</h1>
+
+    {% if user_email %}
+        <p>Email Connected: {{ user_email }}</p>
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" name="remove_email">Remove Email</button>
+        </form>
+    {% else %}
+        <p>No email connected. <a href="{% url 'google_login' %}">Connect with Google</a></p>
+    {% endif %}
+
+    <h3>Upload CSV File</h3>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="csv_file" />
+        <button type="submit">Upload CSV</button>
+    </form>
+
+    {% if csv_filename %}
+        <h3>CSV File Uploaded: {{ csv_filename }}</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" name="remove_csv">Remove CSV</button>
+        </form>
+    {% endif %}
+</body>
+</html>
