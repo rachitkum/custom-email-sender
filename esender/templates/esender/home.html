@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Connect Email</title>
+    <title>Custom Email Sender</title>
 </head>
 <body>
     <h1>Welcome</h1>
@@ -14,20 +14,67 @@
     {% else %}
         <p>No email connected. <a href="{% url 'google_login' %}">Connect with Google</a></p>
     {% endif %}
-
-    <h3>Upload CSV File</h3>
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        <input type="file" name="csv_file" />
+        <label for="csv_file">Upload CSV File</label>
+        <input type="file" name="csv_file" id="csv_file" accept=".csv">
         <button type="submit">Upload CSV</button>
     </form>
 
+  
     {% if csv_filename %}
-        <h3>CSV File Uploaded: {{ csv_filename }}</h3>
         <form method="POST">
             {% csrf_token %}
             <button type="submit" name="remove_csv">Remove CSV</button>
         </form>
+    {% endif %}
+    
+
+    {% if csv_rows %}
+        <form method="POST">
+            {% csrf_token %}
+            <h3>Custom Prompt</h3>
+            <p>Use placeholders from the following columns: </p>
+            <ul>
+                {% for column in column_names %}
+                    <li>{{ column }}</li>
+                {% endfor %}
+            </ul>
+            <textarea name="custom_prompt" rows="5" cols="50" placeholder="Enter your custom prompt here..."></textarea>
+            <br>
+            <button type="submit" name="send_emails">Send Emails</button>
+        </form>
+    {% endif %}
+
+
+    {% if user_email %}
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" name="remove_email">Remove Email Account</button>
+        </form>
+    {% endif %}
+    
+ 
+    {% if csv_filename %}
+        <h3>Uploaded CSV File: {{ csv_filename }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    {% for column in csv_rows.0 %}
+                        <th>{{ column }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in csv_rows %}
+                    <tr>
+                        {% for value in row.values %}
+                            <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
 </body>
 </html>
