@@ -1,3 +1,4 @@
+<!-- templates/esender/home.html -->
 <html>
 <head>
     <title>Custom Email Sender</title>
@@ -42,7 +43,21 @@
             </ul>
             <textarea name="custom_prompt" rows="5" cols="50" placeholder="Enter your custom prompt here..."></textarea>
             <br>
-            <button type="submit" name="send_emails">Send Emails</button>
+   <!-- Add a checkbox to schedule the emails -->
+   <label for="schedule_checkbox">Schedule Emails?</label>
+   <input type="checkbox" name="schedule_checkbox" id="schedule_checkbox" value="true">
+
+   <!-- Input field for the scheduled time -->
+   <label for="schedule_time">Scheduled Time:</label>
+   <input type="datetime-local" name="schedule_time" id="schedule_time">
+   <label for="throttle_checkbox">Enable Throttling</label>
+<input type="checkbox" id="throttle_checkbox" name="throttle_checkbox">
+
+<label for="rate_limit">Emails per minute:</label>
+<input type="number" name="rate_limit" id="rate_limit" min="1" placeholder="Enter emails per minute">
+
+        <button type="submit" name="send_emails">Send Emails</button>
+
         </form>
     {% endif %}
 
@@ -76,5 +91,14 @@
             </tbody>
         </table>
     {% endif %}
+
+    <h2>Email Sending Status</h2>
+    <div>
+        <p><strong>Total Emails Sent:</strong> {{ email_status.total_sent }}</p>
+        <p><strong>Emails Pending:</strong> {{ email_status.pending }}</p>
+        <p><strong>Emails Scheduled:</strong> {{ email_status.scheduled }}</p>
+        <p><strong>Emails Failed:</strong> {{ email_status.failed }}</p>
+        <p><strong>Response Rate:</strong> {{ email_status.response_rate }}%</p>
+    </div>
 </body>
 </html>

@@ -7,4 +7,5 @@ urlpatterns = [
     path('oauth/google/login/', views.google_login, name='google_login'),
     path('oauth/google/callback/', views.google_callback, name='google_callback'),
     path('send_bulk_emails/', views.send_bulk_emails, name='send_bulk_emails'),
+    path('send_email_task/', views.send_email_task, name='send_email_task'),
 ]
