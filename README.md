@@ -3,31 +3,31 @@
 A Django application to schedule and send emails at specific times using Celery and Redis. The app integrates with the Gmail API for secure email sending via OAuth 2.0.
 
 ## Project Structure
-
-custom-email-sender/
-│
-├── custom_email_sender/               # Main Django project directory
-│   ├── __init__.py
-│   ├── settings.py          # Django settings
-│   ├── urls.py              # Project URL configuration
-│   ├── celery.py            # Celery configuration
-│   ├── wsgi.py
-│   └── asgi.py
-│
-├── esender/                   # Main application directory
-│   ├── __init__.py
-│   ├── models.py            # Email scheduling models
-│   ├── views.py             # Core views for scheduling emails
-│   ├── tasks.py             # Celery tasks for email dispatch
-│   ├── forms.py             # Django form for scheduling emails
-│   ├── urls.py              # App-specific URL configuration
-│   └── templates/
-│       └── esender/ 
-            └── home.html
-│
-├── static/                  # Static files (CSS, JS, images)
-├── templates/               # Project-wide templates
-└── manage.py
+            ```bash
+            custom-email-sender/
+            │
+            ├── custom_email_sender/               # Main Django project directory
+            │   ├── __init__.py
+            │   ├── settings.py          # Django settings
+            │   ├── urls.py              # Project URL configuration
+            │   ├── celery.py            # Celery configuration
+            │   ├── wsgi.py
+            │   └── asgi.py
+            │
+            ├── esender/                   # Main application directory
+            │   ├── __init__.py
+            │   ├── models.py            # Email scheduling models
+            │   ├── views.py             # Core views for scheduling emails
+            │   ├── tasks.py             # Celery tasks for email dispatch
+            │   ├── forms.py             # Django form for scheduling emails
+            │   ├── urls.py              # App-specific URL configuration
+            │   └── templates/
+            │       └── esender/ 
+                        └── home.html
+            │
+            ├── static/                  # Static files (CSS, JS, images)
+            ├── templates/               # Project-wide templates
+            └── manage.py
 
 ## Key Features
 
