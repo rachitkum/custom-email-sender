@@ -3,7 +3,7 @@
 A Django application to schedule and send emails at specific times using Celery and Redis. The app integrates with the Gmail API for secure email sending via OAuth 2.0.
 
 ## Project Structure
-
+# Main application directory │ ├── init.py # Marks the directory as a Python package │ ├── admin.py # Admin site configurations │ ├── apps.py # Application configurations │ ├── models.py # Database models for email scheduling │ ├── views.py # Views to handle email scheduling and user requests │ ├── forms.py # Django forms for email scheduling │ ├── tasks.py # Celery tasks for sending scheduled emails │ ├── tests.py # Test cases for the application │ ├── urls.py # App-specific URL routing │ └── templates/ # Templates for rendering HTML pages │ └── schedule_email.html # Email scheduling form template │ ├── static/ # Static files (CSS, JavaScript, images) │ ├── templates/ # Shared templates for the project │ ├── manage.py # Django management script  ├── requirements.txt # List of dependencies └── README.md
 
 ## Key Features
 
