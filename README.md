@@ -5,7 +5,6 @@ A Django application to schedule and send emails at specific times using Celery 
 ## Project Structure
 
 custom-email-sender/
-
 │
 ├── custom_email_sender/               # Main Django project directory
 │   ├── __init__.py
