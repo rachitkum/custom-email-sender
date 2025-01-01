@@ -3,7 +3,7 @@
 A Django application to schedule and send emails at specific times using Celery and Redis. The app integrates with the Gmail API for secure email sending via OAuth 2.0.
 
 ## Project Structure
-```bash
+
             custom-email-sender/
             │
             ├── custom_email_sender/               # Main Django project directory
