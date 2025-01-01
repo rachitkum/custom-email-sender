@@ -4,8 +4,8 @@ A Django application to schedule and send emails at specific times using Celery 
 
 ## Project Structure
 
-custom-email-sender/
-│
+custom-email-sender/\n
+│\n
 ├── custom_email_sender/               # Main Django project directory
 │   ├── __init__.py
 │   ├── settings.py          # Django settings
@@ -28,7 +28,7 @@ custom-email-sender/
 ├── static/                  # Static files (CSS, JS, images)
 ├── templates/               # Project-wide templates
 └── manage.py
-custom-email-sender/ │ ├── custom_email_sender/ # Main Django project directory │ ├── init.py # Marks the directory as a Python package │ ├── settings.py # Django settings │ ├── urls.py # Project URL configuration │ ├── celery.py # Celery configuration │ ├── wsgi.py # WSGI configuration for deployment │ └── asgi.py # ASGI configuration for async support │ ├── esender/ # Main application directory │ ├── init.py # Marks the directory as a Python package │ ├── models.py # Email scheduling models │ ├── views.py # Core views for scheduling emails │ ├── tasks.py # Celery tasks for email dispatch │ ├── forms.py # Django forms for scheduling emails │ ├── urls.py # App-specific URL configuration │ └── templates/ # Application-specific templates │ └── esender/ │ └── home.html # HTML form for scheduling emails │ ├── static/ # Static files (CSS, JavaScript, images) │ ├── templates/ # Shared templates for the project │ └── manage.py # Django management script
+
 ## Key Features
 
 - **Schedule Emails**: Schedule emails to be sent at a specific date and time.
