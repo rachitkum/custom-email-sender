@@ -90,7 +90,7 @@ def get_or_create_email_status():
 @api_view(['POST'])
 def send_bulk_emails(request):
 
-    access_token = "ya29.a0AeXRPp4zQFn-DhbbogS_rx0kTReTY0ISP_d75mNxPN1QM5S4dG03TBySpXRI5BNJGX5ePrEfL-pB03GSzIs3n9ktKty1xmo0vdo4G4K6X5KffBE-3YFndySVfJN__LgJF_1Dcn9RsmxHPtvYsTKUAA_s43RW8qBFNGfzDTLgaCgYKAeQSARMSFQHGX2MiTlX5F7hMf4ax035jkvQiyA0175"#request.session.get('google_access_token')
+    access_token = request.session.get('google_access_token')
     if not access_token:
         return Response({"error": "User not authenticated with Google"}, status=401)
 
