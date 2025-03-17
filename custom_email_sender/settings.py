@@ -1,15 +1,25 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 from celery.schedules import crontab
 
+# Base Directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-3)!s_2=_0uijt800ewrdc-1x7-c_6t6%9hpne4xy#8wsz1t5ik'
-DEBUG = True
-ALLOWED_HOSTS = []
+# Load environment variables from .env
+load_dotenv(BASE_DIR / ".env")
 
+# Security
+SECRET_KEY = 'django-insecure-3)!s_2=_0uijt800ewrdc-1x7-c_6t6%9hpne4xy#8wsz1t5ik'
+
+DEBUG=True
+
+ALLOWED_HOSTS = ['*']  # Update this for production
+
+# Installed Apps
 INSTALLED_APPS = [
-    'esender',
+    'rest_framework',  # Django REST Framework for APIs
+    'esender',         # Your custom app
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -18,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 ]
 
+# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -29,27 +40,60 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'custom_email_sender.urls'
-GOOGLE_CLIENT_ID = '1018808204219-3sbgj6ve3nm06snk4hkvt4giclt2qiae.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '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'
-GOOGLE_REDIRECT_URI = 'http://localhost:8000/oauth/google/callback'
 
-# Celery configuration
-CELERY_BROKER_URL = 'redis://localhost:6379'
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379")
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
-# Remove direct reference to a tasks.py file and adjust schedule to match the task defined directly in your views
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379")
+
 CELERY_BEAT_SCHEDULE = {
     'send-scheduled-emails-every-minute': {
-        'task': 'esender.tasks.send_email_task',  # Directly reference the task in views
-        'schedule': crontab(minute='*/1'),  # Adjust schedule as needed
+        'task': 'esender.tasks.send_email_task',
+        'schedule': crontab(minute='*/1'),
     },
 }
-SENDGRID_API_KEY ='Y1geSSFTR8yqnW06HN8-xw'
+
+# Google API Settings
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
+
+# Database
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+# Authentication
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+# Localization
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+# Static Files (for serving React build files and static assets)
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'frontend', 'build', 'static'),  # Include React static files
+]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Collect static files here during deployment
+
+# React Build Files (for production)
+REACT_APP_DIR = os.path.join(BASE_DIR, 'frontend', 'build')
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [REACT_APP_DIR],  # Point to React's build directory
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -62,25 +106,8 @@ TEMPLATES = [
     },
 ]
 
+# WSGI Application
 WSGI_APPLICATION = 'custom_email_sender.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
-
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
-STATIC_URL = 'static/'
+# Default Auto Field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
