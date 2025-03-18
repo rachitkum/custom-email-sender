@@ -23,7 +23,7 @@ def google_login(request):
     auth_url = (
         "https://accounts.google.com/o/oauth2/auth"
         f"?client_id={settings.GOOGLE_CLIENT_ID}"
-        f"&redirect_uri=http://localhost:8081/google-callback/"
+        f"&redirect_uri=http://localhost:8081/api/google-callback/"
         "&scope=email profile https://www.googleapis.com/auth/gmail.send"
         "&response_type=code"
         "&access_type=offline"
