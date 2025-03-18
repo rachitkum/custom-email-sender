@@ -1,6 +1,4 @@
 .env
 *.env
-
-# Ignore virtual environments
 venv/
 env/

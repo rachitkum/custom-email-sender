@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
 ]
 
 # Middleware
@@ -37,6 +38,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'custom_email_sender.urls'
@@ -74,7 +77,15 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8081",  # React Native web app in development
+    "http://localhost:3000",  # If running from a different port
+    "https://custom-email-sender-production.up.railway.app",  # Your production backend URL
+]
 
+# If you want to allow all origins temporarily
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
 # Localization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
