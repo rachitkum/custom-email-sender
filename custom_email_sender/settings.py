@@ -43,7 +43,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
 ]
-
+#updated
 ROOT_URLCONF = 'custom_email_sender.urls'
 
 # Celery Configuration
