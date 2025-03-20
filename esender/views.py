@@ -32,6 +32,36 @@ def google_login(request):
 
 
 # Google OAuth Callback API
+# @api_view(['GET'])
+# def google_callback(request):
+#     code = request.GET.get('code')
+#     if not code:
+#         return Response({"error": "No authorization code received"}, status=400)
+
+#     token_url = "https://oauth2.googleapis.com/token"
+#     token_data = {
+#         'code': code,
+#         'client_id': settings.GOOGLE_CLIENT_ID,
+#         'client_secret': settings.GOOGLE_CLIENT_SECRET,
+#         'redirect_uri': settings.GOOGLE_REDIRECT_URI,
+#         'grant_type': 'authorization_code'
+#     }
+#     token_response = requests.post(token_url, data=token_data)
+#     token_json = token_response.json()
+
+#     access_token = token_json.get('access_token')
+#     user_info_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+#     user_info_response = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
+#     user_info_json = user_info_response.json()
+    
+#     user_email = user_info_json.get('email')
+#     FRONTEND_REDIRECT_URI="https://bulkmailsender.netlify.app/success"
+#     request.session['user_email'] = user_email
+#     request.session['google_access_token'] = access_token
+
+#     redirect_url = f"{FRONTEND_REDIRECT_URI}?success=true&email={user_email}&token={access_token}"
+#     return HttpResponseRedirect(redirect_url)
+# Google OAuth Callback API
 @api_view(['GET'])
 def google_callback(request):
     code = request.GET.get('code')
@@ -53,13 +83,14 @@ def google_callback(request):
     user_info_url = "https://www.googleapis.com/oauth2/v3/userinfo"
     user_info_response = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
     user_info_json = user_info_response.json()
-    
+
     user_email = user_info_json.get('email')
-    FRONTEND_REDIRECT_URI="https://bulkmailsender.netlify.app/success"
     request.session['user_email'] = user_email
     request.session['google_access_token'] = access_token
 
-    redirect_url = f"{FRONTEND_REDIRECT_URI}?success=true&email={user_email}&token={access_token}"
+    # Redirect back to the home screen with token and email
+    FRONTEND_REDIRECT_URI = "https://bulkmailsender.netlify.app"
+    redirect_url = f"{FRONTEND_REDIRECT_URI}?token={access_token}&email={user_email}"
     return HttpResponseRedirect(redirect_url)
 
 
