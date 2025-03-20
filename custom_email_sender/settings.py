@@ -81,6 +81,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8081",  # React Native web app in development
     "http://localhost:3000",  # If running from a different port
     "https://custom-email-sender-production.up.railway.app",  # Your production backend URL
+    "https://bulkmailsender.netlify.app",
 ]
 
 # If you want to allow all origins temporarily

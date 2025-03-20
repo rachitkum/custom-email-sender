@@ -55,7 +55,7 @@ def google_callback(request):
     user_info_json = user_info_response.json()
     
     user_email = user_info_json.get('email')
-    FRONTEND_REDIRECT_URI="http://localhost:8081/success"
+    FRONTEND_REDIRECT_URI="https://bulkmailsender.netlify.app/success"
     request.session['user_email'] = user_email
     request.session['google_access_token'] = access_token
 
