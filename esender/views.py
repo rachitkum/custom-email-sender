@@ -23,7 +23,7 @@ def google_login(request):
     auth_url = (
         "https://accounts.google.com/o/oauth2/auth"
         f"?client_id={settings.GOOGLE_CLIENT_ID}"
-        f"&redirect_uri=http://localhost:8081/api/google-callback/"
+        f"&redirect_uri={settings.GOOGLE_REDIRECT_URI}"
         "&scope=email profile https://www.googleapis.com/auth/gmail.send"
         "&response_type=code"
         "&access_type=offline"
@@ -44,36 +44,22 @@ def google_callback(request):
         'client_id': settings.GOOGLE_CLIENT_ID,
         'client_secret': settings.GOOGLE_CLIENT_SECRET,
         'redirect_uri': settings.GOOGLE_REDIRECT_URI,
-        'grant_type': 'authorization_code',
+        'grant_type': 'authorization_code'
     }
-
-    # Exchange code for access token
     token_response = requests.post(token_url, data=token_data)
     token_json = token_response.json()
 
     access_token = token_json.get('access_token')
-    if not access_token:
-        return Response({"error": "Failed to retrieve access token"}, status=401)
-
-    # Get user information from Google
     user_info_url = "https://www.googleapis.com/oauth2/v3/userinfo"
     user_info_response = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
     user_info_json = user_info_response.json()
-
+    
     user_email = user_info_json.get('email')
 
-    # Save access token and email to session
-    request.session['google_access_token'] = access_token
     request.session['user_email'] = user_email
+    request.session['google_access_token'] = access_token
 
-    # Return token to frontend
-    return Response({
-        "message": "User authenticated successfully",
-        "access_token": access_token,
-        "email": user_email,
-    })
-
-
+    return Response({"message": "User authenticated", "email": user_email})
 
 
 # API to Upload CSV
@@ -100,38 +86,30 @@ def get_or_create_email_status():
     return email_status
 
 
+# API to Send Bulk Emails
 @api_view(['POST'])
 def send_bulk_emails(request):
-    # Get access token from session
+
     access_token = request.session.get('google_access_token')
     if not access_token:
         return Response({"error": "User not authenticated with Google"}, status=401)
 
-    try:
-        # Initialize Google API credentials
-        credentials = Credentials(access_token)
-        service = build('gmail', 'v1', credentials=credentials)
-    except Exception as e:
-        return Response({"error": f"Failed to initialize Gmail API: {str(e)}"}, status=500)
-
-    # Get data from request
-    data = request.data
+    credentials = Credentials(access_token)
+    service = build('gmail', 'v1', credentials=credentials)
+    data = request.data 
     prompt = data.get('prompt')
     csv_rows = data.get('csv_rows', [])
 
-    # Validate input
     if not prompt or not csv_rows:
         return Response({"error": "Prompt and CSV data are required"}, status=400)
 
-    email_status = get_or_create_email_status()  # Keeps existing logic intact
+    email_status = get_or_create_email_status()
 
-    # Process each row from CSV data
     for row in csv_rows:
         email = row.get('email')
         if not email:
-            continue  # Skip rows with no email
+            continue
 
-        # Personalize content based on placeholders
         personalized_content = prompt
         matches = re.findall(r'\{([^}]+)\}', prompt)
 
@@ -140,28 +118,19 @@ def send_bulk_emails(request):
             for key, value in row.items():
                 if key.strip().lower() == match_clean:
                     placeholder = f"{{{match}}}"
-                    personalized_content = personalized_content.replace(
-                        placeholder, str(value)
-                    )
+                    personalized_content = personalized_content.replace(placeholder, value)
 
-        # Prepare and send the email
         try:
             message = MIMEText(personalized_content)
             message['To'] = email
             message['Subject'] = "Custom Subject"
             raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
 
-            # Send the email using Gmail API
             service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
-
-            # Update email status after successful send
             email_status.update_status('sent')
-
         except HttpError as error:
-            print(f"Error sending email to {email}: {error}")
             email_status.update_status('failed')
 
-    # Calculate response rate after processing all emails
     email_status.calculate_response_rate()
     return Response({"message": "Emails sent successfully"})
 
