@@ -44,27 +44,35 @@ def google_callback(request):
         'client_id': settings.GOOGLE_CLIENT_ID,
         'client_secret': settings.GOOGLE_CLIENT_SECRET,
         'redirect_uri': settings.GOOGLE_REDIRECT_URI,
-        'grant_type': 'authorization_code'
+        'grant_type': 'authorization_code',
     }
+
+    # Exchange code for access token
     token_response = requests.post(token_url, data=token_data)
     token_json = token_response.json()
 
     access_token = token_json.get('access_token')
+    if not access_token:
+        return Response({"error": "Failed to retrieve access token"}, status=401)
+
+    # Get user information from Google
     user_info_url = "https://www.googleapis.com/oauth2/v3/userinfo"
     user_info_response = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
     user_info_json = user_info_response.json()
-    
+
     user_email = user_info_json.get('email')
 
-    if not access_token or not user_email:
-        return Response({"error": "Failed to authenticate"}, status=401)
+    # Save access token and email to session
+    request.session['google_access_token'] = access_token
+    request.session['user_email'] = user_email
 
-    # Return token and email in response
+    # Return token to frontend
     return Response({
         "message": "User authenticated successfully",
+        "access_token": access_token,
         "email": user_email,
-        "access_token": access_token
     })
+
 
 
 
