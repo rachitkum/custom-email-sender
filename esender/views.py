@@ -56,10 +56,16 @@ def google_callback(request):
     
     user_email = user_info_json.get('email')
 
-    request.session['user_email'] = user_email
-    request.session['google_access_token'] = access_token
+    if not access_token or not user_email:
+        return Response({"error": "Failed to authenticate"}, status=401)
 
-    return Response({"message": "User authenticated", "email": user_email})
+    # Return token and email in response
+    return Response({
+        "message": "User authenticated successfully",
+        "email": user_email,
+        "access_token": access_token
+    })
+
 
 
 # API to Upload CSV
