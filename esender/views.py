@@ -16,7 +16,7 @@ from googleapiclient.errors import HttpError
 from email.mime.text import MIMEText
 from datetime import datetime
 from .models import EmailStatus
-
+from django.http import HttpResponseRedirect
 # Google login API
 @api_view(['GET'])
 def google_login(request):
@@ -55,11 +55,12 @@ def google_callback(request):
     user_info_json = user_info_response.json()
     
     user_email = user_info_json.get('email')
-
+    FRONTEND_REDIRECT_URI="http://localhost:8081/success"
     request.session['user_email'] = user_email
     request.session['google_access_token'] = access_token
 
-    return Response({"message": "User authenticated", "email": user_email})
+    redirect_url = f"{FRONTEND_REDIRECT_URI}?success=true&email={user_email}&token={access_token}"
+    return HttpResponseRedirect(redirect_url)
 
 
 # API to Upload CSV
