@@ -92,30 +92,38 @@ def get_or_create_email_status():
     return email_status
 
 
-# API to Send Bulk Emails
 @api_view(['POST'])
 def send_bulk_emails(request):
-
+    # Get access token from session
     access_token = request.session.get('google_access_token')
     if not access_token:
         return Response({"error": "User not authenticated with Google"}, status=401)
 
-    credentials = Credentials(access_token)
-    service = build('gmail', 'v1', credentials=credentials)
-    data = request.data 
+    try:
+        # Initialize Google API credentials
+        credentials = Credentials(access_token)
+        service = build('gmail', 'v1', credentials=credentials)
+    except Exception as e:
+        return Response({"error": f"Failed to initialize Gmail API: {str(e)}"}, status=500)
+
+    # Get data from request
+    data = request.data
     prompt = data.get('prompt')
     csv_rows = data.get('csv_rows', [])
 
+    # Validate input
     if not prompt or not csv_rows:
         return Response({"error": "Prompt and CSV data are required"}, status=400)
 
-    email_status = get_or_create_email_status()
+    email_status = get_or_create_email_status()  # Keeps existing logic intact
 
+    # Process each row from CSV data
     for row in csv_rows:
         email = row.get('email')
         if not email:
-            continue
+            continue  # Skip rows with no email
 
+        # Personalize content based on placeholders
         personalized_content = prompt
         matches = re.findall(r'\{([^}]+)\}', prompt)
 
@@ -124,19 +132,28 @@ def send_bulk_emails(request):
             for key, value in row.items():
                 if key.strip().lower() == match_clean:
                     placeholder = f"{{{match}}}"
-                    personalized_content = personalized_content.replace(placeholder, value)
+                    personalized_content = personalized_content.replace(
+                        placeholder, str(value)
+                    )
 
+        # Prepare and send the email
         try:
             message = MIMEText(personalized_content)
             message['To'] = email
             message['Subject'] = "Custom Subject"
             raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
 
+            # Send the email using Gmail API
             service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
+
+            # Update email status after successful send
             email_status.update_status('sent')
+
         except HttpError as error:
+            print(f"Error sending email to {email}: {error}")
             email_status.update_status('failed')
 
+    # Calculate response rate after processing all emails
     email_status.calculate_response_rate()
     return Response({"message": "Emails sent successfully"})
 
