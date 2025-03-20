@@ -90,14 +90,18 @@ def get_or_create_email_status():
 # API to Send Bulk Emails
 @api_view(['POST'])
 def send_bulk_emails(request):
-
-    access_token = request.session.get('google_access_token')
-    if not access_token:
+    # ✅ Get token from Authorization header
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
         return Response({"error": "User not authenticated with Google"}, status=401)
+    
+    # ✅ Extract access token correctly
+    access_token = auth_header.split(' ')[1]  
 
     credentials = Credentials(access_token)
     service = build('gmail', 'v1', credentials=credentials)
-    data = request.data 
+
+    data = request.data
     prompt = data.get('prompt')
     csv_rows = data.get('csv_rows', [])
 
@@ -134,6 +138,7 @@ def send_bulk_emails(request):
 
     email_status.calculate_response_rate()
     return Response({"message": "Emails sent successfully"})
+
 
 
 # API to Remove User Session
