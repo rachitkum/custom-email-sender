@@ -19,5 +19,6 @@ urlpatterns = [
     path('api/upload-csv/', views.upload_csv, name='upload_csv'),
     path('api/send-bulk-emails/', views.send_bulk_emails, name='send_bulk_emails'),
     path('api/logout/', views.logout_user, name='logout_user'),
-     path('api/send-event/', views.send_analytics_event),
+    path('api/send-event/', views.send_analytics_event),
+    
 ]

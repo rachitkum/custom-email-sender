@@ -17,8 +17,10 @@ from email.mime.text import MIMEText
 from datetime import datetime
 from .models import EmailStatus
 from django.http import HttpResponseRedirect
+
 from django.views.decorators.csrf import csrf_exempt
 import json
+
 @csrf_exempt
 def send_analytics_event(request):
     if request.method == 'POST':
@@ -31,6 +33,7 @@ def send_analytics_event(request):
         response = requests.post(url, json=data)
         return JsonResponse({'status': 'sent', 'response_code': response.status_code})
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
 # Google login API
 @api_view(['GET'])
 def google_login(request):
