@@ -93,8 +93,8 @@ def google_callback(request):
     request.session['google_access_token'] = access_token
 
     # Redirect back to the home screen with token and email
-    # FRONTEND_REDIRECT_URI = "https://bulkmailsender.netlify.app"
-    FRONTEND_REDIRECT_URI = "http://localhost:8081/"
+    FRONTEND_REDIRECT_URI = "https://bulkmailsender.netlify.app"
+    # FRONTEND_REDIRECT_URI = "http://localhost:8081/"
 
     redirect_url = f"{FRONTEND_REDIRECT_URI}?token={access_token}&email={user_email}"
     return HttpResponseRedirect(redirect_url)
