@@ -17,22 +17,40 @@ from email.mime.text import MIMEText
 from datetime import datetime
 from .models import EmailStatus
 from django.http import HttpResponseRedirect
+GA_MEASUREMENT_ID = 'G-WN4L23Q7SW'
+GA_API_SECRET = '9Brw9QJdRXGpipOo7ntsgg'
 
-from django.views.decorators.csrf import csrf_exempt
-import json
+@api_view(['POST'])
+def send_event_to_ga(request):
+    payload = request.data
 
-@csrf_exempt
-def send_analytics_event(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
+    # Validate required fields
+    client_id = payload.get("client_id")
+    events = payload.get("events")
 
-        measurement_id = 'G-WN4L23Q7SW'
-        api_secret = '9Brw9QJdRXGpipOo7ntsgg'
-        url = f'https://www.google-analytics.com/mp/collect?measurement_id={measurement_id}&api_secret={api_secret}'
+    if not client_id or not events:
+        return Response({"error": "Missing 'client_id' or 'events'"}, status=400)
 
-        response = requests.post(url, json=data)
-        return JsonResponse({'status': 'sent', 'response_code': response.status_code})
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    # Build Google Analytics URL
+    ga_url = (
+        f"https://www.google-analytics.com/mp/collect"
+        f"?measurement_id={GA_MEASUREMENT_ID}"
+        f"&api_secret={GA_API_SECRET}"
+    )
+
+    try:
+        response = requests.post(ga_url, json=payload)
+        if response.status_code != 204:
+            return Response({
+                "status": "sent_with_warning",
+                "response_code": response.status_code,
+                "details": response.text,
+            }, status=200)
+
+        return Response({"status": "✅ Event sent", "response_code": 204})
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 
 # Google login API
 @api_view(['GET'])
@@ -40,44 +58,13 @@ def google_login(request):
     auth_url = (
         "https://accounts.google.com/o/oauth2/auth"
         f"?client_id={settings.GOOGLE_CLIENT_ID}"
-        f"&redirect_uri={settings.GOOGLE_REDIRECT_URI}"
+        f"&redirect_uri={settings.GOOGLE_REDIRECT_URI}"       
         "&scope=email profile https://www.googleapis.com/auth/gmail.send"
         "&response_type=code"
         "&access_type=offline"
     )
     return JsonResponse({"auth_url": auth_url})
 
-
-# Google OAuth Callback API
-# @api_view(['GET'])
-# def google_callback(request):
-#     code = request.GET.get('code')
-#     if not code:
-#         return Response({"error": "No authorization code received"}, status=400)
-
-#     token_url = "https://oauth2.googleapis.com/token"
-#     token_data = {
-#         'code': code,
-#         'client_id': settings.GOOGLE_CLIENT_ID,
-#         'client_secret': settings.GOOGLE_CLIENT_SECRET,
-#         'redirect_uri': settings.GOOGLE_REDIRECT_URI,
-#         'grant_type': 'authorization_code'
-#     }
-#     token_response = requests.post(token_url, data=token_data)
-#     token_json = token_response.json()
-
-#     access_token = token_json.get('access_token')
-#     user_info_url = "https://www.googleapis.com/oauth2/v3/userinfo"
-#     user_info_response = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
-#     user_info_json = user_info_response.json()
-    
-#     user_email = user_info_json.get('email')
-#     FRONTEND_REDIRECT_URI="https://bulkmailsender.netlify.app/success"
-#     request.session['user_email'] = user_email
-#     request.session['google_access_token'] = access_token
-
-#     redirect_url = f"{FRONTEND_REDIRECT_URI}?success=true&email={user_email}&token={access_token}"
-#     return HttpResponseRedirect(redirect_url)
 # Google OAuth Callback API
 @api_view(['GET'])
 def google_callback(request):
@@ -106,8 +93,8 @@ def google_callback(request):
     request.session['google_access_token'] = access_token
 
     # Redirect back to the home screen with token and email
-    FRONTEND_REDIRECT_URI = "https://bulkmailsender.netlify.app"
-    # FRONTEND_REDIRECT_URI = "http://localhost:8081/"
+    # FRONTEND_REDIRECT_URI = "https://bulkmailsender.netlify.app"
+    FRONTEND_REDIRECT_URI = "http://localhost:8081/"
 
     redirect_url = f"{FRONTEND_REDIRECT_URI}?token={access_token}&email={user_email}"
     return HttpResponseRedirect(redirect_url)
