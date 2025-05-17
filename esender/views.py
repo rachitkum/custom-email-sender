@@ -100,7 +100,7 @@ def google_callback(request):
     return HttpResponseRedirect(redirect_url)
 
 
-# API to Upload CSV
+# API to Upload CSV.
 @api_view(['POST'])
 def upload_csv(request):
     if 'csv_file' not in request.FILES:
