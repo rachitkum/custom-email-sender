@@ -17,8 +17,22 @@ from email.mime.text import MIMEText
 from datetime import datetime
 from .models import EmailStatus
 from django.http import HttpResponseRedirect
+from .models import EmailStatus
 GA_MEASUREMENT_ID = 'G-WN4L23Q7SW'
 GA_API_SECRET = '9Brw9QJdRXGpipOo7ntsgg'
+
+def get_or_create_email_status(user_email):
+    return EmailStatus.objects.get_or_create(user_email=user_email)[0]
+
+def get_user_email_from_token(access_token):
+    try:
+        user_info_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+        user_info_response = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
+        user_info_json = user_info_response.json()
+        return user_info_json.get("email")
+    except:
+        return None
+
 
 @api_view(['POST'])
 def send_event_to_ga(request):
@@ -84,23 +98,38 @@ def google_callback(request):
     token_json = token_response.json()
 
     access_token = token_json.get('access_token')
+    if not access_token:
+        return Response({"error": "Failed to retrieve access token"}, status=400)
+
     user_info_url = "https://www.googleapis.com/oauth2/v3/userinfo"
     user_info_response = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
     user_info_json = user_info_response.json()
 
     user_email = user_info_json.get('email')
+    if not user_email:
+        return Response({"error": "Failed to retrieve user email"}, status=400)
+
+    # Save user email and token in session
     request.session['user_email'] = user_email
     request.session['google_access_token'] = access_token
 
-    # Redirect back to the home screen with token and email
+    # Create or update EmailStatus for this user_email
+    email_status, created = EmailStatus.objects.get_or_create(user_email=user_email)
+    if created:
+        # Initialized with default zeros from model
+        pass
+    else:
+        # Optionally reset or keep stats (up to you)
+        pass
+
+    # Redirect back to frontend with token and email in query params
+    # FRONTEND_REDIRECT_URI = "http://localhost:8081/"  # or your production URL
     FRONTEND_REDIRECT_URI = "https://bulkmailsender.netlify.app"
-    # FRONTEND_REDIRECT_URI = "http://localhost:8081/"
 
     redirect_url = f"{FRONTEND_REDIRECT_URI}?token={access_token}&email={user_email}"
     return HttpResponseRedirect(redirect_url)
 
-
-# API to Upload CSV.
+# API to Upload CSV
 @api_view(['POST'])
 def upload_csv(request):
     if 'csv_file' not in request.FILES:
@@ -127,14 +156,18 @@ def get_or_create_email_status():
 # API to Send Bulk Emails
 @api_view(['POST'])
 def send_bulk_emails(request):
-    # ✅ Get token from Authorization header
     auth_header = request.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '):
         return Response({"error": "User not authenticated with Google"}, status=401)
-    
-    # ✅ Extract access token correctly
-    access_token = auth_header.split(' ')[1]  
 
+    access_token = auth_header.split(' ')[1]
+    
+    # ✅ Get user email from Google API using access token
+    user_email = get_user_email_from_token(access_token)
+    if not user_email:
+        return Response({"error": "Unable to retrieve user email"}, status=401)
+
+    # Create credentials and Gmail service
     credentials = Credentials(access_token)
     service = build('gmail', 'v1', credentials=credentials)
 
@@ -145,7 +178,8 @@ def send_bulk_emails(request):
     if not prompt or not csv_rows:
         return Response({"error": "Prompt and CSV data are required"}, status=400)
 
-    email_status = get_or_create_email_status()
+    # ✅ Get or create analytics entry for this user
+    email_status, _ = EmailStatus.objects.get_or_create(user_email=user_email)
 
     for row in csv_rows:
         email = row.get('email')
@@ -170,19 +204,66 @@ def send_bulk_emails(request):
 
             service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
             email_status.update_status('sent')
-        except HttpError as error:
+        except HttpError:
             email_status.update_status('failed')
 
     email_status.calculate_response_rate()
-    return Response({"message": "Emails sent successfully"})
 
+    total_attempts = email_status.total_sent + email_status.total_failed
+    success_rate = round((email_status.total_sent / total_attempts) * 100, 2) if total_attempts > 0 else 0.0
+    failure_rate = round((email_status.total_failed / total_attempts) * 100, 2) if total_attempts > 0 else 0.0
+    analytics = {
+        "total_sent": email_status.total_sent,
+        "total_failed": email_status.total_failed,
+        "total_attempts": total_attempts,
+        "success_rate": success_rate,
+        "failure_rate": failure_rate,
+        "response_rate": email_status.response_rate,
+    }
 
+    return Response({
+        "message": "Emails sent successfully",
+        "analytics": analytics
+    })
 
 # API to Remove User Session
 @api_view(['POST'])
 def logout_user(request):
     request.session.flush()
     return Response({"message": "Logged out successfully"})
+
+@api_view(['GET'])
+def get_user_analytics(request):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return Response({"error": "User not authenticated with Google"}, status=401)
+
+    access_token = auth_header.split(' ')[1]
+    print(access_token)
+    user_email = get_user_email_from_token(access_token)
+    if not user_email:
+        return Response({"error": "Unable to retrieve user email"}, status=401)
+
+    try:
+        email_status = EmailStatus.objects.get(user_email=user_email)
+        total_attempts = email_status.total_sent + email_status.total_failed
+        success_rate = round((email_status.total_sent / total_attempts) * 100, 2) if total_attempts > 0 else 0.0
+        failure_rate = round((email_status.total_failed / total_attempts) * 100, 2) if total_attempts > 0 else 0.0
+
+        return Response({
+            "user_email": user_email,
+            "total_scheduled": email_status.total_scheduled,
+            "total_sent": email_status.total_sent,
+            "total_failed": email_status.total_failed,
+            "response_rate": email_status.response_rate,
+            "success_rate": success_rate,
+            "failure_rate": failure_rate,
+        })
+    except EmailStatus.DoesNotExist:
+        return Response({"error": "No analytics found for this user"}, status=404)
+
+
+
 
 # def send_bulk_emails(request, prompt, csv_data):
 #     access_token = request.session.get('google_access_token')

@@ -20,5 +20,4 @@ urlpatterns = [
     path('api/send-bulk-emails/', views.send_bulk_emails, name='send_bulk_emails'),
     path('api/logout/', views.logout_user, name='logout_user'),
     path('api/send-event/', views.send_event_to_ga, name='send_event_to_ga'),
-
-]
+    path('api/get-user-analytics/', views.get_user_analytics, name='get-user-analytics'),]
